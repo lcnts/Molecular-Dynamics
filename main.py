@@ -29,9 +29,11 @@ well_depth = np.array([2, 2, 2, 2, 2])  # Units in eV
 zero_distance = np.array([4, 4, 4, 4, 4])  # Units in Å
 
 # Compute New Positions and Velocities
+
+# Arrays to store positions at each step for all atoms
 x_all = np.concatenate((x_init[None, :], np.zeros((total_steps, len(mass)))))
-y_all = np.concatenate((x_init[None, :], np.zeros((total_steps, len(mass)))))
-z_all = np.concatenate((x_init[None, :], np.zeros((total_steps, len(mass)))))
+y_all = np.concatenate((y_init[None, :], np.zeros((total_steps, len(mass)))))
+z_all = np.concatenate((z_init[None, :], np.zeros((total_steps, len(mass)))))
 
 old_x = x_init
 old_y = y_init
@@ -68,4 +70,16 @@ def force(atom_index, x, y, z, well_depth, zero_distance):
         F_y: force in y direction
         F_z: force in z direction
     """
+
+    F_x, F_y, F_z = 0, 0, 0
+    for other_index in range(len(x)):
+        if other_index != atom_index:
+            r = np.sqrt((x[atom_index] - x[other_index]) ** 2 + 
+                        (y[atom_index] - y[other_index]) ** 2 + 
+                        (z[atom_index] - z[other_index]) ** 2)
+            # Compute Lennard-Jones force, below formula to be filled
+            # F = ??? 
+            F_x += F * (x[atom_index] - x[other_index]) / r
+            F_y += F * (y[atom_index] - y[other_index]) / r
+            F_z += F * (z[atom_index] - z[other_index]) / r
     return F_x, F_y, F_z
