@@ -52,7 +52,13 @@ def force(atom_index, x, y, z, well_depth, zero_distance):
                         (y[atom_index] - y[other_index]) ** 2 + 
                         (z[atom_index] - z[other_index]) ** 2)
             # Compute Lennard-Jones force, below formula to be filled
-            # F = ??? 
+            sigma = (zero_distance[atom_index] + zero_distance[other_index]) / 2.0
+            epsilon = np.sqrt(well_depth[atom_index] * well_depth[other_index])
+            r_inv = 1.0 / r
+            r_inv6 = r_inv ** 6
+            r_inv12 = r_inv6 ** 2
+            F = 24 * epsilon * r_inv * (2 * sigma ** 12 * r_inv12 - sigma ** 6 * r_inv6)
+            
             F_x += F * (x[atom_index] - x[other_index]) / r
             F_y += F * (y[atom_index] - y[other_index]) / r
             F_z += F * (z[atom_index] - z[other_index]) / r
