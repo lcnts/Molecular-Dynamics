@@ -1,151 +1,173 @@
-""" Molecular Dynamics Simulation
-This code simulations the dynamics of atoms governed by the Lennard-Jones potential at the molecular scale
+
+""" Molecular Dynamics Simulation (Object-Oriented Version)
+This code simulates the dynamics of atoms governed by the Lennard-Jones potential at the molecular scale.
 Authors: Borui Xu, Lucien Tsai, Yeqi Chu
 """
 
+from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+from typing import List, Tuple
 
-box_size = 100  # Units in Å
-total_time = 10  # Units in ns
-total_steps = 1000
-dt = total_time/total_steps
-
-# Initial Atomic Positions
-x_init = np.array([1, 2, 3, 4, 5])
-y_init = np.array([1, 2, 3, 4, 5])
-z_init = np.array([1, 2, 3, 4, 5])
-
-# Initial Atomic Veolcities
-x_dot_init = np.array([0, 0, 0, 0, 0])
-y_dot_init = np.array([0, 0, 0, 0, 0])
-z_dot_init = np.array([0, 0, 0, 0, 0])
-
-# Atomic Masses
-mass = np.array([1, 1, 1, 1, 1])  # Units in AMU
-
-# Lennard-Jones Parameters
-well_depth = np.array([2, 2, 2, 2, 2])  # Units in eV
-zero_distance = np.array([4, 4, 4, 4, 4])  # Units in Å
-
-def force(atom_index: int, x: float, y: float, z: float, well_depth, zero_distance):
-    """Computes the force on an atom from all other atoms
-    Inputs:
-        atom_index: index of the atom at which the force is computed
-        x: x positions of all atoms
-        y: y positions of all atoms
-        z: z positions of all atoms
-        well_depth: 1st Lennard-Jones parameter of all atoms
-        zero_distance: 2nd Lennard-Jones parameter of all atoms
-    Outputs:
-        F_x: force in x direction
-        F_y: force in y direction
-        F_z: force in z direction
-    """
-
-    F_x: float = 0
-    F_y: float = 0
-    F_z: float = 0
-    for other_index in range(len(x)):
-        if other_index != atom_index:
-            dx = x[atom_index] - x[other_index]
-            dy = y[atom_index] - y[other_index]
-            dz = z[atom_index] - z[other_index]
-            r = np.sqrt(dx**2 + dy**2 + dz**2)
-            # Compute Lennard-Jones force, below formula to be filled
-            # F = ??? 
-            if r==0:
-                continue
-            epsilon_ij = np.sqrt(well_depth[atom_index] * well_depth[other_index])
-            sigma_ij = (zero_distance[atom_index] + zero_distance[other_index]) / 2
-            # Force magnitude
-            F_mag = 4 * epsilon_ij * ((12 * (sigma_ij ** 12) / r ** 13) - (6 * (sigma_ij ** 6) / r ** 7))
-            F_x += F_mag * dx / r
-            F_y += F_mag * dy / r
-            F_z += F_mag * dz / r
-    return F_x, F_y, F_z
-
-
-# Compute New Positions and Velocities
-
-# Arrays to store positions at each step for all atoms
-
-def verlet_integration(total_steps, x_init, y_init, z_init, x_all, y_all, z_all, mass, well_depth, zero_distance):
-    num_atoms = len(mass)
-    x_all = np.zeros((total_steps + 1, num_atoms))
-    y_all = np.zeros((total_steps + 1, num_atoms))
-    z_all = np.zeros((total_steps + 1, num_atoms))
-
-    x_all[0, :] = x_init
-    y_all[0, :] = y_init
-    z_all[0, :] = z_init
-    
-    x_dot_all = np.zeros((total_steps + 1, num_atoms))
-    y_dot_all = np.zeros((total_steps + 1, num_atoms))
-    z_dot_all = np.zeros((total_steps + 1, num_atoms))
-    
-    x_dot_all[0, :] = x_dot_init
-    y_dot_all[0, :] = y_dot_init
-    z_dot_all[0, :] = z_dot_init
-    # x_all = np.concatenate((x_init[None, :], np.zeros((total_steps, len(mass)))))
-    # y_all = np.concatenate((y_init[None, :], np.zeros((total_steps, len(mass)))))
-    # z_all = np.concatenate((z_init[None, :], np.zeros((total_steps, len(mass)))))
-
-    # Compute initial forces
-    F_x = np.zeros(num_atoms)
-    F_y = np.zeros(num_atoms)
-    F_z = np.zeros(num_atoms)
-    
-    for i in range(num_atoms):
-        F_x[i], F_y[i], F_z[i] = force(i, x_all[0, :], y_all[0, :], z_all[0, :], well_depth, zero_distance)
-
-    # old_x = x_init
-    # old_y = y_init
-    # old_z = z_init
-
-    for step in range(1, total_steps + 1):  # Verlet Integration (w/o Velocities)
+class Atom:
+    """Class representing an individual atom in the simulation."""
+    def __init__(
+        self, 
+        position: Tuple[float, float, float], 
+        velocity: Tuple[float, float, float],
+        mass: float, 
+        epsilon: float, 
+        sigma: float) -> None:
         
-        # Update positions
-        for i in range(num_atoms):
-            x_all[step, i] = x_all[step - 1, i] + x_dot_all[step - 1, i] * dt + (F_x[i] / (2 * mass[i])) * dt ** 2
-            y_all[step, i] = y_all[step - 1, i] + y_dot_all[step - 1, i] * dt + (F_y[i] / (2 * mass[i])) * dt ** 2
-            z_all[step, i] = z_all[step - 1, i] + z_dot_all[step - 1, i] * dt + (F_z[i] / (2 * mass[i])) * dt ** 2
+        self.position: np.ndarray = np.array(position, dtype=float)
+        self.velocity: np.ndarray = np.array(velocity, dtype=float)
+        self.mass: float = mass
+        self.epsilon: float = epsilon
+        self.sigma: float = sigma
+        self.force: np.ndarray = np.zeros(3, dtype=float)
 
-        # Compute new forces
-        F_x_new = np.zeros(num_atoms)
-        F_y_new = np.zeros(num_atoms)
-        F_z_new = np.zeros(num_atoms)
-        for i in range(num_atoms):
-            F_x_new[i], F_y_new[i], F_z_new[i] = force(i, x_all[step, :], y_all[step, :], z_all[step, :], well_depth, zero_distance)
-
-        # Update velocities
-        for i in range(num_atoms):
-            x_dot_all[step, i] = x_dot_all[step - 1, i] + ((F_x[i] + F_x_new[i]) / (2 * mass[i])) * dt
-            y_dot_all[step, i] = y_dot_all[step - 1, i] + ((F_y[i] + F_y_new[i]) / (2 * mass[i])) * dt
-            z_dot_all[step, i] = z_dot_all[step - 1, i] + ((F_z[i] + F_z_new[i]) / (2 * mass[i])) * dt
-
-        # temp_x = old_x
-        # temp_y = old_y
-        # temp_z = old_z
-        # for j in range(len(mass)):
-        #     F_x, F_y, F_z = force(j, x_all, y_all, z_all, well_depth, zero_distance)
-        #     x_ddot = F_x / mass[j]
-        #     y_ddot = F_y / mass[j]
-        #     z_ddot = F_z / mass[j]
-
-        #     x_all[i][j] = x_all[j] * 2 - old_x[j] + x_ddot * dt * dt
-        #     y_all[i][j] = y_all[j] * 2 - old_y[j] + y_ddot * dt * dt
-        #     z_all[i][j] = z_all[j] * 2 - old_z[j] + z_ddot * dt * dt
-        # old_x = temp_x
-        # old_y = temp_y
-        # old_z = temp_z
+class MolecularDynamicsSimulator:
+    """Class for simulating molecular dynamics using the Lennard-Jones potential."""
+    def __init__(
+        self, 
+        atoms: List[Atom], 
+        box_size: float, 
+        total_time: float, 
+        total_steps: int) -> None:
         
-        F_x = F_x_new
-        F_y = F_y_new
-        F_z = F_z_new
-        
-    return x_all, y_all, z_all, x_dot_all, y_dot_all, z_dot_all
+        self.atoms: List[Atom] = atoms
+        self.box_size: float = box_size
+        self.total_time: float = total_time
+        self.total_steps: int = total_steps
+        self.dt: float = total_time / total_steps
+        self.num_atoms: int = len(atoms)
+        self.positions: np.ndarray = np.zeros((total_steps + 1, self.num_atoms, 3))
+        self.velocities: np.ndarray = np.zeros((total_steps + 1, self.num_atoms, 3))
 
-x_all, y_all, z_all, x_dot_all, y_dot_all, z_dot_all = verlet_integration(
-    total_steps, x_init, y_init, z_init, x_dot_init, y_dot_init, z_dot_init, mass, well_depth, zero_distance
-)
+    def compute_forces(self) -> None:
+        """Compute forces on all atoms."""
+        for atom in self.atoms:
+            atom.force.fill(0.0)
+
+        for i in range(self.num_atoms):
+            atom_i = self.atoms[i]
+            for j in range(i + 1, self.num_atoms):
+                atom_j = self.atoms[j]
+                # Compute distance vector and magnitude
+                delta = atom_i.position - atom_j.position
+                # Apply minimum image convention for periodic boundaries
+                delta -= self.box_size * np.round(delta / self.box_size)
+                r: float = np.linalg.norm(delta)
+                if r == 0:
+                    continue  # Avoid division by zero
+                # Compute Lennard-Jones parameters
+                epsilon_ij: float = np.sqrt(atom_i.epsilon * atom_j.epsilon)
+                sigma_ij: float = (atom_i.sigma + atom_j.sigma) / 2
+                # Compute force magnitude
+                F_mag: float = 4 * epsilon_ij * (
+                    (12 * sigma_ij ** 12 / r ** 13) - (6 * sigma_ij ** 6 / r ** 7)
+                )
+                # Update forces
+                force_vector: np.ndarray = (F_mag / r) * delta
+                atom_i.force += force_vector
+                atom_j.force -= force_vector  # Newton's third law
+
+    def integrate(self) -> None:
+        """Perform the Verlet integration over all time steps."""
+        # Initialize positions and velocities
+        for idx, atom in enumerate(self.atoms):
+            self.positions[0, idx, :] = atom.position
+            self.velocities[0, idx, :] = atom.velocity
+
+        # Compute initial forces
+        self.compute_forces()
+
+        # Time integration loop
+        for step in range(1, self.total_steps + 1):
+            for idx, atom in enumerate(self.atoms):
+                # Update positions
+                atom.position += atom.velocity * self.dt + (atom.force / (2 * atom.mass)) * self.dt ** 2
+                # Apply periodic boundary conditions
+                atom.position %= self.box_size
+
+            # Compute new forces
+            self.compute_forces()
+
+            for idx, atom in enumerate(self.atoms):
+                # Update velocities
+                atom.velocity += (atom.force / atom.mass) * self.dt
+                # Store positions and velocities
+                self.positions[step, idx, :] = atom.position
+                self.velocities[step, idx, :] = atom.velocity
+
+    def animate(
+        self, 
+        filename: str = 'md_simulation.gif', 
+        interval: int = 50, 
+        save_gif: bool = True) -> None:
+        
+        """Create and optionally save an animation of the simulation."""
+        fig, ax = plt.subplots(figsize=(8, 8))
+        ax.set_xlim(-self.box_size, self.box_size)
+        ax.set_ylim(-self.box_size, self.box_size)
+        ax.set_xlabel('X-coordinate (Å)')
+        ax.set_ylabel('Y-coordinate (Å)')
+        ax.set_title('Molecular Dynamics Simulation')
+        scat = ax.scatter([], [], s=100)
+
+        def update(frame: int):
+            ax.clear()
+            ax.set_xlim(-self.box_size, self.box_size)
+            ax.set_ylim(-self.box_size, self.box_size)
+            ax.set_xlabel('X-coordinate (Å)')
+            ax.set_ylabel('Y-coordinate (Å)')
+            ax.set_title(f'Molecular Dynamics Simulation (Time: {frame * self.dt:.2f} ns)')
+            positions = self.positions[frame]
+            scat = ax.scatter(positions[:, 0], positions[:, 1], s=100, c='blue')
+            return scat,
+
+        ani = FuncAnimation(fig, update, frames=range(0, self.total_steps + 1, 10), interval=interval, blit=True)
+
+        if save_gif:
+            ani.save(filename, writer='pillow', fps=20)
+        plt.show()
+
+# Simulation parameters
+box_size: float = 25.0  # Units in Å
+total_time: float = 10.0  # Units in ns
+total_steps: int = 1000
+
+# Create atoms
+initial_positions: np.ndarray = np.array([
+    [1.0, 1.0, 1.0],
+    [5.0, 5.0, 1.0],
+    [10.0, 10.0, 1.0],
+    [15.0, 15.0, 1.0],
+    [20.0, 20.0, 1.0]
+])
+initial_velocities: np.ndarray = np.array([
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0],
+    [0.0, 0.0, 0.0]
+])
+mass: float = 1.0  # Units in AMU
+epsilon: float = 2.0  # Units in eV
+sigma: float = 4.0  # Units in Å
+
+# Create Atom instances
+atoms: List[Atom] = [
+    Atom(position=pos, velocity=vel, mass=mass, epsilon=epsilon, sigma=sigma)
+    for pos, vel in zip(initial_positions, initial_velocities)
+]
+
+# Create the simulator instance
+simulator = MolecularDynamicsSimulator(atoms, box_size, total_time, total_steps)
+
+# Run simulation
+simulator.integrate()
+
+# Animate the results
+simulator.animate()
