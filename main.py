@@ -58,7 +58,7 @@ class MolecularDynamicsSimulator:
                 delta = atom_i.position - atom_j.position
                 # Apply minimum image convention for periodic boundaries
                 delta -= self.box_size * np.round(delta / self.box_size)
-                r: float = np.linalg.norm(delta)
+                r: float = float(np.linalg.norm(delta))
                 if r == 0:
                     continue  # Avoid division by zero
                 # Compute Lennard-Jones parameters
