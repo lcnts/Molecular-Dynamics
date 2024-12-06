@@ -1,4 +1,3 @@
-
 """ Molecular Dynamics Simulation (Object-Oriented Version)
 This code simulates the dynamics of atoms governed by the Lennard-Jones potential at the molecular scale.
 Authors: Borui Xu, Lucien Tsai, Yeqi Chu
@@ -8,14 +7,15 @@ from __future__ import annotations
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from typing import List, Tuple
+from abc import ABC, abstractmethod
+from typing import List
 
 class Atom:
     """Class representing an individual atom in the simulation."""
     def __init__(
         self, 
-        position: Tuple[float, float, float], 
-        velocity: Tuple[float, float, float],
+        position: np.ndarray, 
+        velocity: np.ndarray,
         mass: float, 
         epsilon: float, 
         sigma: float) -> None:
@@ -26,7 +26,52 @@ class Atom:
         self.epsilon: float = epsilon
         self.sigma: float = sigma
         self.force: np.ndarray = np.zeros(3, dtype=float)
-
+        
+class Potential(ABC):
+    """Abstract base class for different potentials."""
+    @abstractmethod
+    def compute_forces(
+        self, 
+        atom: List[Atom],
+        box_size: float) -> None:
+        """Compute forces acting on all atoms.
+        
+        Args:
+            atoms: List of Atom objects in the simulation.
+            box_size: Size of the simulation box for periodic boundary conditions.
+        """
+        pass
+    
+class LennardJonesPotential(Potential):
+    """A concrete class implementing the Lennard-Jones potential."""
+    def compute_forces(
+        self,
+        atoms: List[Atom], 
+        box_size: float) -> None:
+        # Reset all forces
+        for atom in atoms:
+            atom.force.fill(0.0)
+        
+        num_atoms: int = len(atoms)
+        for i in range(num_atoms):
+            atom_i: Atom = atoms[i]
+            for j in range(i + 1, num_atoms):
+                atom_j: Atom = atoms[j]
+                delta: np.ndarray = atom_i.position - atom_j.position
+                # Apply minimum image convention for periodic boundaries
+                delta -= box_size * np.round(delta / box_size)
+                r: float = float(np.linalg.norm(delta))
+                if r == 0:
+                    continue
+                epsilon_ij: float = np.sqrt(atom_i.epsilon * atom_j.epsilon)
+                sigma_ij: float = (atom_i.sigma + atom_j.sigma) / 2
+                F_mag: float = 4 * epsilon_ij * (
+                    (12 * sigma_ij**12 / r**13) - (6 * sigma_ij**6 / r**7)
+                )
+                force_vector: np.ndarray = (F_mag / r) * delta
+                atom_i.force += force_vector
+                atom_j.force -= force_vector
+                
 class MolecularDynamicsSimulator:
     """Class for simulating molecular dynamics using the Lennard-Jones potential."""
     def __init__(
@@ -34,7 +79,8 @@ class MolecularDynamicsSimulator:
         atoms: List[Atom], 
         box_size: float, 
         total_time: float, 
-        total_steps: int) -> None:
+        total_steps: int,
+        potential: Potential) -> None:
         
         self.atoms: List[Atom] = atoms
         self.box_size: float = box_size
@@ -44,34 +90,7 @@ class MolecularDynamicsSimulator:
         self.num_atoms: int = len(atoms)
         self.positions: np.ndarray = np.zeros((total_steps + 1, self.num_atoms, 3))
         self.velocities: np.ndarray = np.zeros((total_steps + 1, self.num_atoms, 3))
-
-    def compute_forces(self) -> None:
-        """Compute forces on all atoms."""
-        for atom in self.atoms:
-            atom.force.fill(0.0)
-
-        for i in range(self.num_atoms):
-            atom_i = self.atoms[i]
-            for j in range(i + 1, self.num_atoms):
-                atom_j = self.atoms[j]
-                # Compute distance vector and magnitude
-                delta = atom_i.position - atom_j.position
-                # Apply minimum image convention for periodic boundaries
-                delta -= self.box_size * np.round(delta / self.box_size)
-                r: float = float(np.linalg.norm(delta))
-                if r == 0:
-                    continue  # Avoid division by zero
-                # Compute Lennard-Jones parameters
-                epsilon_ij: float = np.sqrt(atom_i.epsilon * atom_j.epsilon)
-                sigma_ij: float = (atom_i.sigma + atom_j.sigma) / 2
-                # Compute force magnitude
-                F_mag: float = 4 * epsilon_ij * (
-                    (12 * sigma_ij ** 12 / r ** 13) - (6 * sigma_ij ** 6 / r ** 7)
-                )
-                # Update forces
-                force_vector: np.ndarray = (F_mag / r) * delta
-                atom_i.force += force_vector
-                atom_j.force -= force_vector  # Newton's third law
+        self.potential: Potential = potential 
 
     def integrate(self) -> None:
         """Perform the Verlet integration over all time steps."""
@@ -80,8 +99,8 @@ class MolecularDynamicsSimulator:
             self.positions[0, idx, :] = atom.position
             self.velocities[0, idx, :] = atom.velocity
 
-        # Compute initial forces
-        self.compute_forces()
+        # Compute initial forces using the assigned potential
+        self.potential.compute_forces(self.atoms, self.box_size)
 
         # Time integration loop
         for step in range(1, self.total_steps + 1):
@@ -92,7 +111,7 @@ class MolecularDynamicsSimulator:
                 atom.position %= self.box_size
 
             # Compute new forces
-            self.compute_forces()
+            self.potential.compute_forces(self.atoms, self.box_size)
 
             for idx, atom in enumerate(self.atoms):
                 # Update velocities
@@ -164,7 +183,8 @@ atoms: List[Atom] = [
 ]
 
 # Create the simulator instance
-simulator = MolecularDynamicsSimulator(atoms, box_size, total_time, total_steps)
+lj_potential = LennardJonesPotential()
+simulator = MolecularDynamicsSimulator(atoms, box_size, total_time, total_steps, lj_potential)
 
 # Run simulation
 simulator.integrate()
