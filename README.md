@@ -22,8 +22,7 @@ All codes are in script.ipynb.
         2. Partial fix: fix an atom's displacement, but 1 or 2 or 3 components of it. For example: only fix the z-direction displacement.
         3. Fix distance: fix the distance between two atoms
 3. Examples:
-    1. 5 points in a line
+    1. Simple Three Point LJ Potential with Fixed Distance Constraint
     2. A kresling-like tensegrity
-    3. Equilibrium Velocity Distributions
-
+    3. Particle Statistics from LJ Potential
 
