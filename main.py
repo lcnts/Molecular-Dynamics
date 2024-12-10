@@ -1,5 +1,5 @@
 """ Molecular Dynamics Simulation (Object-Oriented Version)
-This code simulates the dynamics of atoms governed by the Lennard-Jones potential at the molecular scale.
+This code simulates the dynamics of atoms governed by the Lennard-Jones and spring potential at the atomic and lm scale.
 Authors: Borui Xu, Lucien Tsai, Yeqi Chu
 """
 
@@ -56,7 +56,7 @@ class Constraint(ABC):
 class LennardJonesPotential(Potential):
     """A concrete class implementing the Lennard-Jones potential."""
     def compute_forces(self, atoms: List[Atom], box_size: float) -> None:
-        # Reset all forces
+        # Set all forces to 0
         for atom in atoms:
             atom.force.fill(0.0)
 
@@ -67,13 +67,13 @@ class LennardJonesPotential(Potential):
                 if i == j:  # Skip self-interaction
                     continue
 
-                # If defined pairwise_interactions，check if (i, j) is in it
+                # For defined pairwise_interactions，check if (i, j) is in it
                 if self.pairwise_interactions is not None and (i, j) not in self.pairwise_interactions:
                     continue
 
                 atom_j: Atom = atoms[j]
                 delta: np.ndarray = atom_i.position - atom_j.position
-                # Apply minimum image convention for periodic boundaries
+                # Apply Periodic Boundary Conditions
                 delta -= box_size * np.round(delta / box_size)
                 r: float = float(np.linalg.norm(delta))
                 if r == 0:
@@ -104,7 +104,7 @@ class LinearSpringPotential(Potential):
         self.k = k
 
     def compute_forces(self, atoms: List[Atom], box_size: float) -> None:
-        # Reset all forces
+        # Set all forces to 0
         for atom in atoms:
             atom.force.fill(0.0)
 
@@ -114,40 +114,38 @@ class LinearSpringPotential(Potential):
             for j in range(i + 1, num_atoms):
                 atom_j = atoms[j]
 
-                # If we have defined pairwise_interactions, check if (i, j) is included
+                # For defined pairwise_interactions，check if (i, j) is in it
                 if self.pairwise_interactions is not None:
                     if (i, j) not in self.pairwise_interactions and (j, i) not in self.pairwise_interactions:
                         continue
 
-                # Check if we have a rest length defined for this pair
+                # Check if a rest length is defined
                 if (i, j) in self.rest_lengths:
                     r0 = self.rest_lengths[(i, j)]
                 elif (j, i) in self.rest_lengths:
                     r0 = self.rest_lengths[(j, i)]
                 else:
-                    # If no rest length is defined for this pair, skip
                     continue
 
                 delta = atom_i.position - atom_j.position
                 delta -= box_size * np.round(delta / box_size)
                 r = float(np.linalg.norm(delta))
                 if r == 0:
-                    # If atoms overlap exactly, handle carefully or skip
+                    # Skip if atomic positions are the same
                     continue
 
-                # Compute displacement from rest length
+                # Compute displacement
                 dr = r - r0
                 if dr != 0.0:
-                    # Force magnitude
+                    # Comppute Force
                     F_mag = self.k * dr
-                    # Direction
+                    # Compute Direction
                     direction = delta / r
                     force_vector = F_mag * direction
-                    # Apply equal and opposite forces
+                    # Apply Newton's 3rd Law
                     atom_i.force -= force_vector
                     atom_j.force += force_vector
 
-                
 class FixPointConstraint(Constraint):
     """A constraint that fixes certain atoms at a given spatial position."""
     def __init__(self, fixed_points: Dict[int, Tuple[float, float, float]]) -> None:
@@ -159,7 +157,7 @@ class FixPointConstraint(Constraint):
     def apply(self, atoms: List[Atom], box_size: float) -> None:
         for idx, atom in enumerate(atoms):
             if idx in self.fixed_points:
-                # Sets the atomic position to the specified coordinate point
+                # Sets the atomic position to the specified coordinates
                 fixed_pos = self.fixed_points[idx]
                 atom.position[:] = fixed_pos
                 atom.velocity.fill(0.0)
@@ -196,11 +194,6 @@ class PartialFixConstraint(Constraint):
                     atom.position[2] = z_val
                     atom.velocity[2] = 0.0
 
-                # If needed, you could apply box boundary conditions here:
-                # atom.position %= box_size
-                # However, if the position is fixed, periodic boundaries may not be desired.
-
-
 class FixedDistanceConstraint(Constraint):
     """A constraint that fixes certain atom pairs at a given distance r0."""
     def __init__(
@@ -231,13 +224,13 @@ class FixedDistanceConstraint(Constraint):
                 atom_j = atoms[j]
 
                 delta = atom_i.position - atom_j.position
-                # Minimum mirror principle (if periodic boundary conditions are required)
+                # Apply Periodic Boundary Conditions
                 delta -= box_size * np.round(delta / box_size)
                 r = float(np.linalg.norm(delta))
                 r0 = self.fixed_distances[(i, j)]
 
                 if r == 0:
-                    # If two points coincide, just shift one of them by a random point
+                    # Skip if atomic positions are the same
                     continue
 
                 # If r! = r0, the position is adjusted
@@ -251,59 +244,9 @@ class FixedDistanceConstraint(Constraint):
                     atom_i.position -= correction
                     atom_j.position += correction
 
-                    # The coordinates are modified with periodic boundary conditions
+                    # The coordinates are modified with Periodic Boundary Conditions
                     atom_i.position %= box_size
                     atom_j.position %= box_size
-                
-class MolecularDynamicsSimulator:
-    def __init__(
-        self, 
-        atoms: List[Atom], 
-        box_size: float, 
-        total_time: float, 
-        total_steps: int,
-        potential: Potential,
-        constraints: Optional[List[Constraint]] = None
-    ) -> None:
-        self.atoms = atoms
-        self.box_size = box_size
-        self.total_time = total_time
-        self.total_steps = total_steps
-        self.dt = total_time / total_steps
-        self.num_atoms = len(atoms)
-        self.positions = np.zeros((total_steps + 1, self.num_atoms, 3), dtype=float)
-        self.velocities = np.zeros((total_steps + 1, self.num_atoms, 3), dtype=float)
-        self.potential = potential
-        self.constraints = constraints if constraints is not None else []
-
-    def integrate(self) -> None:
-        # Initialize positions and velocities
-        for idx, atom in enumerate(self.atoms):
-            self.positions[0, idx, :] = atom.position
-            self.velocities[0, idx, :] = atom.velocity
-
-        # Compute initial forces
-        self.potential.compute_forces(self.atoms, self.box_size)
-
-        # Time integration loop
-        for step in range(1, self.total_steps + 1):
-            # Update positions
-            for idx, atom in enumerate(self.atoms):
-                atom.position += atom.velocity * self.dt + (atom.force / (2 * atom.mass)) * self.dt**2
-                atom.position %= self.box_size
-
-            # Apply constraints
-            for c in self.constraints:
-                c.apply(self.atoms, self.box_size)
-
-            # Compute new forces
-            self.potential.compute_forces(self.atoms, self.box_size)
-
-            # Update velocities
-            for idx, atom in enumerate(self.atoms):
-                atom.velocity += (atom.force / atom.mass) * self.dt
-                self.positions[step, idx, :] = atom.position
-                self.velocities[step, idx, :] = atom.velocity
 
 class MolecularDynamicsSimulator:
     def __init__(
@@ -337,7 +280,7 @@ class MolecularDynamicsSimulator:
 
         # Time integration loop
         for step in range(1, self.total_steps + 1):
-            # Update positions
+            # Update positions using Verlet Integration
             for idx, atom in enumerate(self.atoms):
                 atom.position += atom.velocity * self.dt + (atom.force / (2 * atom.mass)) * self.dt**2
                 atom.position %= self.box_size
@@ -427,134 +370,3 @@ class MolecularDynamicsSimulator:
         if save_gif:
             ani.save(filename, writer='pillow', fps=20)
         plt.show()
-
-# For tensegrity structure
-# Simulation parameters
-box_size: float = 20.0  # Units in Å
-total_time: float = 10.0  # Units in ns
-total_steps: int = 1000
-
-# Create atoms
-# Geometry
-radius: float = 5.0
-theta_bottom: float = 0
-theta_top: float = np.pi/4
-height: float = 10.0
-n_polygon: int = 3
-side_length: float = radius * 2 * np.sin(np.pi / n_polygon)
-initial_positions: np.ndarray = np.array([
-    [radius * np.cos(theta_bottom), radius * np.sin(theta_bottom), 0],
-    [radius * np.cos(theta_bottom + np.pi * 2 / n_polygon), radius * np.sin(theta_bottom + np.pi * 2 / n_polygon), 0],
-    [radius * np.cos(theta_bottom + np.pi * 2 * 2 / n_polygon), radius * np.sin(theta_bottom + np.pi * 2 * 2/ n_polygon), 0],
-    [radius * np.cos(theta_top), radius * np.sin(theta_top), height],
-    [radius * np.cos(theta_top + np.pi * 2 / n_polygon), radius * np.sin(theta_top + np.pi * 2 / n_polygon), height],
-    [radius * np.cos(theta_top + np.pi * 2 * 2 / n_polygon), radius * np.sin(theta_top + np.pi * 2 * 2/ n_polygon), height]
-]) + (np.hstack((np.ones([6,2]), np.zeros([6,1])))) * 10
-# mountain creases are strings, valley creases are rods
-mountain_crease: float = np.linalg.norm(initial_positions[0, :] - initial_positions[n_polygon, :])
-valley_crease: float = np.linalg.norm(initial_positions[0, :] - initial_positions[n_polygon + 1, :])
-initial_velocities: np.ndarray = np.array([
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0],
-    [0.0, 0.0, 0.0]
-])
-mass: float = 1.0  # Units in AMU
-epsilon: float = 2.0  # Units in eV
-sigma: float = 4.0  # Units in Å
-
-# Create Atom instances
-atoms: List[Atom] = [
-    Atom(position=pos, velocity=vel, mass=mass, epsilon=epsilon, sigma=sigma)
-    for pos, vel in zip(initial_positions, initial_velocities)
-]
-
-# LJ potential interaction pairs
-lj_pairs = ls_pairs = [
-    (0, 1),
-    (0, 2), 
-    (1, 2), 
-    (3, 4),
-    (4, 5),
-    (5, 3),
-    (0, 3),
-    (1, 4),
-    (2, 5),
-]
-pairwise_interactions = {(0, 1), (1, 0),
-                         (0, 2), (2, 0), 
-                         (1, 2), (2, 1), 
-                         (3, 4), (4, 3),
-                         (4, 5), (5, 4),
-                         (5, 3), (3, 5),
-                         (0, 3), (3, 0),
-                         (1, 4), (4, 1),
-                         (2, 5), (5, 2)}
-lj_potential = LennardJonesPotential(pairwise_interactions=pairwise_interactions)
-
-# Linear spring potential interaction pairs
-ls_pairs = [
-    (0, 1), (1, 0),
-    (0, 2), (2, 0), 
-    (1, 2), (2, 1), 
-    (3, 4), (4, 3),
-    (4, 5), (5, 4),
-    (5, 3), (3, 5),
-    (0, 3), (3, 0),
-    (1, 4), (4, 1),
-    (2, 5), (5, 2)
-]
-rest_lengths = {
-    (0, 1): side_length, (1, 0): side_length,
-    (0, 2): side_length, (2, 0): side_length, 
-    (1, 2): side_length, (2, 1): side_length, 
-    (3, 4): side_length, (4, 3): side_length,
-    (4, 5): side_length, (5, 4): side_length,
-    (5, 3): side_length, (3, 5): side_length,
-    (0, 3): mountain_crease, (3, 0): mountain_crease,
-    (1, 4): mountain_crease, (4, 1): mountain_crease,
-    (2, 5): mountain_crease, (5, 2): mountain_crease
-}
-linear_spring_potential = LinearSpringPotential(rest_lengths=rest_lengths, k=2.0)
-
-
-# Fixed distances
-fixed_pairs = [(0, 4),
-               (1, 5), 
-               (2, 3)]
-fixed_distances = {
-    (0, 4): valley_crease, (4, 0): valley_crease,
-    (1, 5): valley_crease, (5, 1): valley_crease, 
-    (2, 3): valley_crease, (3, 2): valley_crease
-}
-fixed_distance_constraint = FixedDistanceConstraint(fixed_distances=fixed_distances)
-
-# Partial fixed points
-partial_fixed_points = {
-    1: (None, None, initial_positions[1, 2]),
-    2: (None, None, initial_positions[2, 2])
-}
-partial_fix_constraint = PartialFixConstraint(partial_fixed_points=partial_fixed_points)
-
-# Fixed points constraints
-fixed_points = {
-    0: initial_positions[0, :]
-}
-fixed_points_constraint = FixPointConstraint(fixed_points=fixed_points)
-
-# Create the simulator instance
-simulator = MolecularDynamicsSimulator(
-    atoms=atoms,
-    box_size=box_size,
-    total_time=total_time,
-    total_steps=total_steps,
-    potential=lj_potential,
-    constraints=[fixed_distance_constraint, fixed_points_constraint, partial_fix_constraint]
-)
-# Run simulation
-simulator.integrate()
-
-# Animate the results
-simulator.animate(elev = 0, azim = 0, lj_pairs = lj_pairs, fixed_pairs = fixed_pairs)
