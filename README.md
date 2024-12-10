@@ -1,4 +1,4 @@
-# Molecular Dynamics Method (for tensegrity structure??)
+# Molecular Dynamics Method
 ## Authors: Borui Xu, Lucien Tsai, Yeqi Chu
 
 All codes are in script.ipynb.
@@ -24,5 +24,6 @@ All codes are in script.ipynb.
 3. Examples:
     1. 5 points in a line
     2. A kresling-like tensegrity
+    3. Equilibrium Velocity Distributions
 
 
