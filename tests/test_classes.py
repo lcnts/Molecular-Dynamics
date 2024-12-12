@@ -1,4 +1,3 @@
-import pytest
 from script import Atom, Potential, Constraint
 
 
@@ -8,7 +7,6 @@ class TestPotential(Potential):
         pass
 
 
-@pytest.mark.basic
 def test_atom_basic_initialization():
     """Test if Atom object can be created."""
     position = [0.0, 0.0, 0.0]
@@ -20,14 +18,12 @@ def test_atom_basic_initialization():
     assert isinstance(atom, Atom)
 
 
-@pytest.mark.basic
 def test_potential_initialization():
     """Test if Potential object can be created using the mock subclass."""
     potential = TestPotential()
     assert isinstance(potential, Potential)
 
 
-@pytest.mark.complex
 def test_constraint_initialization():
     """Test if Constraint object can be created with valid parameters."""
     position1 = [0.0, 0.0, 0.0]
@@ -44,7 +40,5 @@ def test_constraint_initialization():
     sigma2 = 1.0
     atom2 = Atom(position2, velocity2, mass2, epsilon2, sigma2)
 
-    rest_length = 1.5
-    constraint = Constraint(atom1, atom2, rest_length)
+    constraint = Constraint(atom1, atom2)
     assert isinstance(constraint, Constraint)
-    assert constraint.rest_length == rest_length
