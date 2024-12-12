@@ -31,10 +31,6 @@ repos:
       - id: mypy
         files: src
 
-  - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
-    hooks:
-      - id: codespell
 
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4

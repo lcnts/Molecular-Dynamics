@@ -25,4 +25,3 @@ All codes are in script.ipynb.
     1. Simple Three Point LJ Potential with Fixed Distance Constraint
     2. A kresling-like tensegrity
     3. Particle Statistics from LJ Potential
-

@@ -1,5 +1,12 @@
 import pytest
-from script import Atom, Potential, Constraint, LennardJonesPotential, LinearSpringPotential
+from script import (
+    Atom,
+    Potential,
+    Constraint,
+    LennardJonesPotential,
+    LinearSpringPotential,
+)
+
 
 # Test for the Atom class
 def test_atom_initialization():
@@ -7,11 +14,15 @@ def test_atom_initialization():
     atom = Atom()
     assert isinstance(atom, Atom)  # Check if atom is an instance of Atom
 
+
 # Test for the Potential class
 def test_potential_initialization():
     """Test if Potential object initializes its attributes correctly."""
     potential = Potential()
-    assert isinstance(potential, Potential)  # Check if the object is an instance of Potential
+    assert isinstance(
+        potential, Potential
+    )  # Check if the object is an instance of Potential
+
 
 # Test for the compute_forces method in Potential class
 def test_potential_compute_forces():
@@ -23,6 +34,7 @@ def test_potential_compute_forces():
     except Exception as e:
         pytest.fail(f"compute_forces raised an exception: {e}")
 
+
 # Test for the Constraint class
 def test_constraint_apply():
     """Test if the apply method in Constraint runs without errors."""
@@ -31,6 +43,7 @@ def test_constraint_apply():
         constraint.apply()
     except Exception as e:
         pytest.fail(f"apply method raised an exception: {e}")
+
 
 # Test for the LennardJonesPotential class
 def test_lennard_jones_potential_compute_forces():
@@ -42,11 +55,15 @@ def test_lennard_jones_potential_compute_forces():
     except Exception as e:
         pytest.fail(f"compute_forces raised an exception: {e}")
 
+
 # Test for the LinearSpringPotential class
 def test_linear_spring_potential_initialization():
     """Test if LinearSpringPotential initializes correctly."""
     potential = LinearSpringPotential()
-    assert isinstance(potential, LinearSpringPotential)  # Check if the object is an instance of LinearSpringPotential
+    assert isinstance(
+        potential, LinearSpringPotential
+    )  # Check if the object is an instance of LinearSpringPotential
+
 
 # Test for the compute_forces method in LinearSpringPotential
 def test_linear_spring_potential_compute_forces():
