@@ -28,7 +28,7 @@ jobs:
 
       - name: Add project root to PYTHONPATH
         run: echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
-        
+
       - name: Run pytest
         run: |
           pytest
