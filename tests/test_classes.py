@@ -1,4 +1,4 @@
-from script import Atom, Potential, LennardJonesPotential
+from main import Atom, Potential, LennardJonesPotential
 import numpy as np
 
 
