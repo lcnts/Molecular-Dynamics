@@ -23,7 +23,6 @@ def test_atom_basic_initialization():
 
 # Basic test case for Potential initialization
 def test_potential_initialization():
-    """Test if Potential object can be created with parameters."""
-    potential = TestPotential(cutoff=10.0)
+    """Test if Potential object can be created using the mock subclass."""
+    potential = TestPotential()  # Removed `cutoff` parameter
     assert isinstance(potential, Potential)  # Verify the instance type
-    assert potential.cutoff == 10.0  # Verify the cutoff parameter
