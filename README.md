@@ -3,8 +3,8 @@
 
 ## Instructions
 
-All necessary components are stored in the main.py file.
-For ease of usage, script.ipynb is provided with the functionalities of main.py and five example cases (see Structure).
+All necessary functions and classes are stored in **main.py**.
+For ease of usage, **example_cases.ipynb** is provided with the (i) necessary functions and classes and (ii) five example cases (see Structure).
 
 ## Structure
 1. Abstract Classes
