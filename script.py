@@ -813,7 +813,7 @@ simulator.integrate()
 simulator.animate_positions()
 
 
-# ## Case 4: Beyond Molecular Dynamics, Tensegrity Structure
+# ## Case 5: Beyond Molecular Dynamics, Tensegrity Structure
 
 # In[11]:
 
