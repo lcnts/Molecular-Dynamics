@@ -1,4 +1,4 @@
-from script import Atom, Potential, Constraint
+from script import Atom, Potential, LennardJonesPotential
 
 
 class TestPotential(Potential):
@@ -24,25 +24,12 @@ def test_potential_initialization():
     assert isinstance(potential, Potential)
 
 
-def test_constraint_initialization():
-    """Test if Constraint object can be created with valid parameters."""
-    position1 = [0.0, 0.0, 0.0]
-    velocity1 = [0.0, 0.0, 0.0]
-    mass1 = 1.0
-    epsilon1 = 1.0
-    sigma1 = 1.0
-    atom1 = Atom(position1, velocity1, mass1, epsilon1, sigma1)
-
-    position2 = [1.0, 1.0, 1.0]
-    velocity2 = [0.0, 0.0, 0.0]
-    mass2 = 1.0
-    epsilon2 = 1.0
-    sigma2 = 1.0
-    atom2 = Atom(position2, velocity2, mass2, epsilon2, sigma2)
-
-    constraint = Constraint()
-    constraint.add_atoms(atom1, atom2)
-    constraint.set_rest_length(1.5)
-
-    assert isinstance(constraint, Constraint)
-    assert constraint.rest_length == 1.5
+def test_lennard_jones_initialization():
+    """Test if LennardJonesPotential object
+    can be created with valid parameters."""
+    epsilon = 1.0
+    sigma = 1.0
+    lj_potential = LennardJonesPotential(epsilon, sigma)
+    assert isinstance(lj_potential, LennardJonesPotential)
+    assert lj_potential.epsilon == epsilon
+    assert lj_potential.sigma == sigma
