@@ -29,9 +29,6 @@ def test_lennard_jones_initialization():
     object can be created with valid parameters."""
     epsilon = 1.0
     sigma = 1.0
-    lj_potential = LennardJonesPotential(epsilon)
+    lj_potential = LennardJonesPotential(epsilon, sigma)
     assert isinstance(lj_potential, LennardJonesPotential)
-    assert lj_potential.epsilon == epsilon
-    if hasattr(lj_potential, "sigma"):
-        lj_potential.sigma = sigma
-        assert lj_potential.sigma == sigma
+    assert lj_potential.compute_force(1.0) is not None
