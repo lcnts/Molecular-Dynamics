@@ -40,5 +40,9 @@ def test_constraint_initialization():
     sigma2 = 1.0
     atom2 = Atom(position2, velocity2, mass2, epsilon2, sigma2)
 
-    constraint = Constraint(atom1, atom2)
+    constraint = Constraint()
+    constraint.add_atoms(atom1, atom2)
+    constraint.set_rest_length(1.5)
+
     assert isinstance(constraint, Constraint)
+    assert constraint.rest_length == 1.5
