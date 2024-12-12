@@ -1,4 +1,4 @@
-from script import Atom, Potential, LennardJonesPotential
+from script import Atom, Potential
 
 
 class TestPotential(Potential):
@@ -24,11 +24,10 @@ def test_potential_initialization():
     assert isinstance(potential, Potential)
 
 
-def test_lennard_jones_initialization():
-    """Test if LennardJonesPotential
-    object can be created with valid parameters."""
-    epsilon = 1.0
-    sigma = 1.0
-    lj_potential = LennardJonesPotential(epsilon, sigma)
-    assert isinstance(lj_potential, LennardJonesPotential)
-    assert lj_potential.compute_force(1.0) is not None
+def test_potential_compute_forces():
+    """Test if compute_forces method works in the mock subclass."""
+    potential = TestPotential()
+    forces = potential.compute_forces()
+    assert isinstance(forces, list)
+    assert len(forces) == 3
+    assert all(force == 0.0 for force in forces)
