@@ -481,7 +481,7 @@ class MolecularDynamicsSimulator:
 
     def animate_statistics(
         self,
-        filename: str = "energy_speed_hist.gif",
+        filename: str = "statistics.gif",
         interval: int = 50,
         save_gif: bool = True,
     ) -> None:
@@ -738,7 +738,7 @@ simulator.animate_positions()
 simulator.animate_statistics()
 
 
-# ## Case 3: Diatomic Molecular Dynamics
+# ## Case 4: Diatomic Molecular Dynamics
 
 # In[9]:
 
