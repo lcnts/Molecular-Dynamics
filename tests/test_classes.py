@@ -28,6 +28,7 @@ def test_potential_compute_forces():
     """Test if compute_forces method works in the mock subclass."""
     potential = TestPotential()
     forces = potential.compute_forces()
-    assert isinstance(forces, list)
-    assert len(forces) == 3
-    assert all(force == 0.0 for force in forces)
+    assert isinstance(forces, list), f"Expected list, got {type(forces)}"
+    assert len(forces) == 3, f"Expected 3 forces, got {len(forces)}"
+    assert all(
+        force == 0.0 for force in forces), f"Expected all zeros, got {forces}"
