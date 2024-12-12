@@ -403,7 +403,7 @@ class MolecularDynamicsSimulator:
             ax.set_zlabel("Z (Å)")
             ax.set_title(
                 f"Molecular Dynamics Simulation "
-                f"(Time: {frame * self.dt:.2f} ns)"
+                f"(Time: {frame * self.dt: .2f} ns)"
             )
 
             current_positions = self.positions[frame]

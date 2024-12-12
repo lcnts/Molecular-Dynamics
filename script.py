@@ -437,7 +437,7 @@ class MolecularDynamicsSimulator:
             ax.set_zlabel("Z (Å)")
             ax.set_title(
                 f"Molecular Dynamics Simulation (Time: "
-                f"{frame * self.dt:.2f} ns)"
+                f"{frame * self.dt: .2f} ns)"
             )
 
             # Update scatter plot
@@ -528,7 +528,7 @@ class MolecularDynamicsSimulator:
             ax1.set_xlabel("Energy (eV)")
             ax1.set_ylabel("Number of Atoms")
             ax1.set_title(
-                f"Atomic Energy Distribution(Time: {frame * self.dt:.2f} ns)"
+                f"Atomic Energy Distribution(Time: {frame * self.dt: .2f} ns)"
                 )
             ax1.hist(
                 energy_data,
@@ -545,7 +545,7 @@ class MolecularDynamicsSimulator:
             ax2.set_xlabel("Speed (Å/ns)")
             ax2.set_ylabel("Number of Atoms")
             ax2.set_title(
-                f"Atomic Speed Distribution(Time: {frame * self.dt:.2f} ns)")
+                f"Atomic Speed Distribution(Time: {frame * self.dt: .2f} ns)")
             ax2.hist(
                 speed_data,
                 bins=speed_bins,
