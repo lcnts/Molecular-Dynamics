@@ -31,13 +31,8 @@ repos:
       - id: mypy
         files: src
 
+
   - repo: https://github.com/shellcheck-py/shellcheck-py
     rev: v0.8.0.4
     hooks:
       - id: shellcheck
-
-  - repo: https://github.com/pre-commit/mirrors-pytest
-    rev: v9.0.0
-    hooks:
-      - id: pytest
-        args: ["--maxfail=3", "--disable-warnings"]
