@@ -168,16 +168,20 @@ class LinearSpringPotential(Potential):
 
 class DampedLinearSpringPotential(Potential):
     """A linear spring potential with damping.
-    
+
     This potential applies:
-    - A spring force that tries to maintain a rest length r0 between pairs of atoms.
+    - A spring force that tries to maintain a
+        rest length r0 between pairs of atoms.
       F_spring = -k * (r - r0) * hat_delta
-    - A damping force proportional to the relative velocity along the line between the atoms:
+    - A damping force proportional to the relative
+        velocity along the line between the atoms:
       F_damp = -c * (v_ij · hat_delta) * hat_delta
     where hat_delta is the unit vector from atom j to atom i.
 
-    Thus, if the atoms move away from equilibrium, they are pulled back by the spring.
-    If they move (either away or towards each other), the damping force opposes the motion, reducing oscillations.
+    Thus, if the atoms move away from equilibrium,
+        they are pulled back by the spring.
+    If they move (either away or towards each other),
+        the damping force opposes the motion, reducing oscillations.
     """
 
     def __init__(
@@ -205,7 +209,10 @@ class DampedLinearSpringPotential(Potential):
 
                 # Check pairwise interactions if defined
                 if self.pairwise_interactions is not None:
-                    if (i, j) not in self.pairwise_interactions and (j, i) not in self.pairwise_interactions:
+                    if (
+                        (i, j) not in self.pairwise_interactions
+                        and (j, i) not in self.pairwise_interactions
+                    ):
                         continue
 
                 # Determine rest length
