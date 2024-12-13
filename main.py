@@ -166,6 +166,84 @@ class LinearSpringPotential(Potential):
                     atom_j.force += force_vector
 
 
+class DampedLinearSpringPotential(Potential):
+    """A linear spring potential with damping.
+    
+    This potential applies:
+    - A spring force that tries to maintain a rest length r0 between pairs of atoms.
+      F_spring = -k * (r - r0) * hat_delta
+    - A damping force proportional to the relative velocity along the line between the atoms:
+      F_damp = -c * (v_ij · hat_delta) * hat_delta
+    where hat_delta is the unit vector from atom j to atom i.
+
+    Thus, if the atoms move away from equilibrium, they are pulled back by the spring.
+    If they move (either away or towards each other), the damping force opposes the motion, reducing oscillations.
+    """
+
+    def __init__(
+        self,
+        rest_lengths: Dict[Tuple[int, int], float],
+        k: float = 1.0,
+        c: float = 0.1,  # Damping coefficient
+        pairwise_interactions: Optional[Set[Tuple[int, int]]] = None
+    ) -> None:
+        super().__init__(pairwise_interactions)
+        self.rest_lengths = rest_lengths
+        self.k = k
+        self.c = c
+
+    def compute_forces(self, atoms: List[Atom], box_size: float) -> None:
+        # Reset forces
+        for atom in atoms:
+            atom.force.fill(0.0)
+
+        num_atoms = len(atoms)
+        for i in range(num_atoms):
+            atom_i = atoms[i]
+            for j in range(i + 1, num_atoms):
+                atom_j = atoms[j]
+
+                # Check pairwise interactions if defined
+                if self.pairwise_interactions is not None:
+                    if (i, j) not in self.pairwise_interactions and (j, i) not in self.pairwise_interactions:
+                        continue
+
+                # Determine rest length
+                if (i, j) in self.rest_lengths:
+                    r0 = self.rest_lengths[(i, j)]
+                elif (j, i) in self.rest_lengths:
+                    r0 = self.rest_lengths[(j, i)]
+                else:
+                    continue
+
+                # Compute displacement and PBC
+                delta = atom_i.position - atom_j.position
+                delta -= box_size * np.round(delta / box_size)
+                r = float(np.linalg.norm(delta))
+                if r == 0:
+                    # If overlap, skip
+                    continue
+
+                hat_delta = delta / r
+                dr = r - r0
+
+                # Spring force
+                # Negative sign ensures it always tries to restore towards r0
+                F_spring_vector = - self.k * dr * hat_delta
+
+                # Damping force
+                v_ij = atom_i.velocity - atom_j.velocity
+                v_proj = np.dot(v_ij, hat_delta)
+                F_damp_vector = - self.c * v_proj * hat_delta
+
+                # Total force on i
+                F_total = F_spring_vector + F_damp_vector
+
+                # Apply equal and opposite forces
+                atom_i.force += F_total
+                atom_j.force -= F_total
+
+
 class FixPointConstraint(Constraint):
     """A concrete class for a constraint
     that fixes certain atoms to a position."""
